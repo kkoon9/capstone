@@ -95,7 +95,7 @@
 
    while (RFID != 'Y') {
      RFIDInput = serialGetchar(fd1);
-     if (RFIDInput == 'Y') {
+     if (RFIDInput == 'K') {
        printf("%c\n", RFIDInput);
        RFID = 'Y';
        serialPutchar(fd2, 'Y');
@@ -118,12 +118,12 @@
      char ch = serialGetchar(fd2);
      for (i = 0; i < W_size; i++) {
        if (weight[i] == '/') {
-         data2[i] = '\0';
+         weight[i] = '\0';
          break;
        }
        weight[i] = serialGetchar(fd2);
      }
-     excute(data2);
+     excute(weight);
      fflush(stdout);
    }
  }
@@ -143,36 +143,38 @@
    t = localtime( & timer);
    timeToString(t);
 
-   char chk = data[0];
-   char temp[200];
+   char chk = weight[0];
+   char temp[W_size];
 
    char head_tail[] = ",";
    char endTail[] = ");";
    int i = 0;
    char * timenow = timeToString(t);
 
-   char data_change[300];
-   for (i = 0; i < 300; i++) {
-     if (data[i] == '\0') {
+   char data_change[W_size];
+   for (i = 0; i < W_size; i++) {
+     if (weight[i] == '\0') {
        break;
      }
-     data_change[i] = data[i + 1];
+     data_change[i] = weight[i + 1];
    }
 
-   if (chk == 'E') {
+   if (chk == 'A') {
      char head[] = "INSERT INTO weight VALUES(";
      sprintf(temp, "%s%s%s%s%s", head, id, head_tail, data_change, endTail);
-     id += 1;
 
-   } else if (chk == 'F') {
-     char head2[] = "INSERT INTO f_section VALUES(1, ";
+   } else if (chk == 'B') {
+     char head2[] = "INSERT INTO weight VALUES(1, ";
      sprintf(temp, "%s%s%s%s%s", head2, timenow, head_tail, data_change, endTail);
-   } else if (chk == 'G') {
-     char head3[] = "INSERT INTO g_section VALUES(1, ";
+   } else if (chk == 'C') {
+     char head3[] = "INSERT INTO weight VALUES(1, ";
      sprintf(temp, "%s%s%s%s%s", head3, timenow, head_tail, data_change, endTail);
-   } else {
-     char head4[] = "INSERT INTO h_section VALUES(1, ";
-     sprintf(temp, "%s%s%s%s%s", head4, timenow, head_tail, data_change, endTail);
+   } else if (chk == 'D') {
+     char head3[] = "INSERT INTO weight VALUES(1, ";
+     sprintf(temp, "%s%s%s%s%s", head3, timenow, head_tail, data_change, endTail);
+   } else if (chk == 'E') {
+     char head3[] = "INSERT INTO weight VALUES(1, ";
+     sprintf(temp, "%s%s%s%s%s", head3, timenow, head_tail, data_change, endTail);
    }
 
    printf("%s", temp);
