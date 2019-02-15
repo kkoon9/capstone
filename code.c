@@ -93,8 +93,8 @@
 
  void loop() {
 
-   while (RFID != 'Y') {
-     RFIDInput = serialGetchar(fd1);
+   while (RFID != 'Y') { // RFID 의 초기값은 N
+     RFIDInput = serialGetchar(fd1); // 지그비를 통해 RFID tag를 읽어온다.
      if (RFIDInput == 'K') {
        printf("%c\n", RFIDInput);
        RFID = 'Y';
