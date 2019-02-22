@@ -121,62 +121,53 @@
  }
 
 void excute(char * data) {
-     printf("excute 진입\n");
-     struct tm * t;
-     time_t timer;
-     timer = time(NULL);
-     t = localtime( & timer);
-     timeToString(t);
-     
-     char temp[W_size];
-     int i, index;
-     char weight_A[5];
-     char weight_B[5];
-     char weight_C[5];
-     char weight_D[5];
-     char weight_E[5];     
-     char head_tail[] = ",";
-     char endTail[] = ");";
-     char * timenow = timeToString(t);
-     char ch;
-     for(char chk = 'B', i = 1, index =0; index<5; chk++,index++){
-          int j = 0;
-          char data_change[W_size];
-          while(weight[i] != chk){
-               data_change[j++] = weight[i++];
-          }
-          switch(index){
-               case 0:
-                    for(int x=0;x<j;x++)
-                         weight_A[x] = data_change[x];
-                    break;
-               case 1:
-                    for(int x=0;x<j;x++)
-                         weight_A[x] = data_change[x];
-                    break;
-               case 2:
-                    for(int x=0;x<j;x++)
-                         weight_A[x] = data_change[x];
-                    break;
-               case 3:
-                    for(int x=0;x<j;x++)
-                         weight_A[x] = data_change[x];
-                    break;
-               case 4:
-                    for(int x=0;x<j;x++)
-                         weight_A[x] = data_change[x];
-                    break;
-               default:
-                    break;
-          }
-     }
-     printf("DB 담기 시작\n");
-     char head[] = "INSERT INTO plate_weight VALUES( ";
-     sprintf(temp, "%s%s%s%s%s%s%s%s%s%s%s%s%s", head, id, head_tail, weight_A,head_tail, weight_B,head_tail, weight_C,head_tail, weight_D,head_tail, weight_E, endTail);
-     printf("asasas\n", temp);
-     //mysql_query(conn, temp);
-     printf("DB 담기 완료\n");
+	printf("excute 진입\n");
+	char temp[100];
+	int i, index;
+	char weight_A[5];
+	char weight_B[5];
+	char weight_C[5];
+	char weight_D[5];
+	char weight_E[5];
+	char head_tail[] = ",";
+	char endTail[] = ");";
+	char ch;
+	for (char chk = 'A', i = 1, index = 0; index < 5; chk++, index++, i++) {
+		int j = 0;
+		char data_change[W_size];
+		while (weight[i] != chk+1 && weight[i] != '/') {
+			data_change[j++] = weight[i++];
+		}
+		data_change[j] = '\0';
+		switch (index) {
+		case 0:
+			sprintf(weight_A, "%s", data_change);
+			break;
+		case 1:
+			sprintf(weight_B, "%s", data_change);
+			break;
+		case 2:
+			sprintf(weight_C, "%s", data_change);
+			break;
+		case 3:
+			sprintf(weight_D, "%s", data_change);
+			break;
+		case 4:
+			sprintf(weight_E, "%s", data_change);
+			break;
+		default:
+			break;
+		}
+	}
+	printf("%s %s %s %s %s\n", weight_A, weight_B, weight_C, weight_D, weight_E);
 
+	printf("DB 담기 시작\n");
+	char head[] = "INSERT INTO plate_weight VALUES(";
+	sprintf(temp, "%s%s%s%s%s%s%s%s%s%s%s%s%s", head, id, head_tail, weight_A, head_tail, weight_B, head_tail, weight_C, head_tail, weight_D, head_tail, weight_E, endTail);
+	printf("temp 담기\n");
+	printf("%s\n", temp);
+	//mysql_query(conn, temp);
+	printf("DB 담기 완료\n");
 }
 
 char * timeToString(struct tm * t) {
