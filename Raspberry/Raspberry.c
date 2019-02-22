@@ -1,17 +1,17 @@
  #ifdef RaspberryPi
-
- #include < stdio.h > //for printf
- #include < stdint.h > //uint8_t definitions
- #include < stdlib.h > //for exit(int);
- #include < string.h > //for errno
- #include < errno.h > //error output
- #include < time.h > 
- #include < wiringPi.h > 
- #include < wiringSerial.h > 
+//  sudo gcc test.c -o helloB -l wiringPi -DRaspberryPi -I/usr/include/mysql -L/usr/lib64/mysql -lmysqlclient
+ #include <stdio.h> //for printf
+ #include <stdint.h> //uint8_t definitions
+ #include <stdlib.h> //for exit(int);
+ #include <string.h> //for errno
+ #include <errno.h> //error output
+ #include <time.h> 
+ #include <wiringPi.h> 
+ #include <wiringSerial.h> 
  #include "mysql/mysql.h"
 
- char device1[] = "/dev/ttyACM0"; // RFID
- char device2[] = "/dev/ttyACM1"; // HX711
+ char device1[] = "/dev/ttyACM0"; // HX711
+ char device2[] = "/dev/ttyACM1"; // ZigBee
  //char device3[]= "/dev/ttyACM2";
  //char device4[]= "/dev/ttyACM3";
 
@@ -21,10 +21,10 @@
 
  char * server = "192.168.0.3";
  char * user = "root";
- char * password = "12345678";
- char * database = "weight";
- const int W_size = 40;
- int id = 1;
+ char * password = "1234";
+ char * database = "checkers";
+ #define W_size 40
+ int id = 4910060;
  int fd1;
  int fd2;
  int fd3;
@@ -32,7 +32,7 @@
  unsigned long baud = 9600;
 
  char RFID = 'N';
- char RFIDInput = 'F';
+ char RFIDInput = 'K';
  int flag = 0;
  char weight[W_size];
  int main(void);
@@ -43,16 +43,6 @@
 
  void setup() {
    fflush(stdout);
-   /*	if ((fd4 = serialOpen (device4, baud)) < 0){
-   		printf (stderr, "Unable to open serial device: %s\n", strerror(errno)) ;
-   		exit(1); //error : device4
-   	}
-
-   	if ((fd3 = serialOpen (device3, baud)) < 0) {
-   		fprintf (stderr, "Unable to open serial device: %s\n", strerror(errno)) ;
-   		exit(1); //error : device3
-   	}
-   */
 
    if ((fd1 = serialOpen(device1, baud)) < 0) {
      fprintf(stderr, "Unable to open serial device: %s\n", strerror(errno));
@@ -87,42 +77,36 @@
 
      exit(1);
    }
+
    printf("Program is running!\n");
+   for(int i=0;i<W_size;i++)
+     weight[i] = '\0';
 
  }
 
  void loop() {
-
    while (RFID != 'Y') { // RFID 의 초기값은 N
-     RFIDInput = serialGetchar(fd1); // 지그비를 통해 RFID tag를 읽어온다.
+    // RFIDInput = serialGetchar(fd2); // 지그비를 통해 RFID tag를 읽어온다.
      if (RFIDInput == 'K') {
-       printf("%c\n", RFIDInput);
+       printf("RFID 읽기 완료 \n");
        RFID = 'Y';
-       serialPutchar(fd2, 'Y');
+       serialPutchar(fd1, 'Y');
        flag = 1;
-
-     }
-     if (RFIDInput == 'N') {
-       RFID = 'N';
-       serialPutchar(fd2, 'N');
-       printf("%c\n", RFID);
+       printf("get weight !!\n");
      }
    }
    while (flag == 1) {
-     char ch = serialGetchar(fd2);
-     if (ch == 'Z')
-       flag = 2;
-   }
-   printf("get weight !!\n");
-   while (flag == 2) {
-     char ch = serialGetchar(fd2);
-     for (i = 0; i < W_size; i++) {
-       if (weight[i] == '/') {
-         weight[i] = '\0';
-         break;
-       }
-       weight[i] = serialGetchar(fd2);
+     
+     for (int i = 0; i < W_size; i++) {
+          char ch = serialGetchar(fd1);
+          printf("%c\n",ch);
+          if (ch == '/') {
+               weight[i] = '\0';
+               break;
+          }
+          weight[i] = ch;
      }
+     printf("DB 담기\n");
      excute(weight);
      fflush(stdout);
    }
@@ -136,61 +120,73 @@
    return 0;
  }
 
- void excute(char * data) {
-   struct tm * t;
-   time_t timer;
-   timer = time(NULL);
-   t = localtime( & timer);
-   timeToString(t);
-
-   char chk = weight[0];
-   char temp[W_size];
-
-   char head_tail[] = ",";
-   char endTail[] = ");";
-   int i = 0;
-   char * timenow = timeToString(t);
-
-   char data_change[W_size];
-   for (i = 0; i < W_size; i++) {
-     if (weight[i] == '\0') {
-       break;
+void excute(char * data) {
+     printf("excute 진입\n");
+     struct tm * t;
+     time_t timer;
+     timer = time(NULL);
+     t = localtime( & timer);
+     timeToString(t);
+     
+     char temp[W_size];
+     int i, index;
+     char weight_A[5];
+     char weight_B[5];
+     char weight_C[5];
+     char weight_D[5];
+     char weight_E[5];     
+     char head_tail[] = ",";
+     char endTail[] = ");";
+     char * timenow = timeToString(t);
+     char ch;
+     for(char chk = 'B', i = 1, index =0; index<5; chk++,index++){
+          int j = 0;
+          char data_change[W_size];
+          while(weight[i] != chk){
+               data_change[j++] = weight[i++];
+          }
+          switch(index){
+               case 0:
+                    for(int x=0;x<j;x++)
+                         weight_A[x] = data_change[x];
+                    break;
+               case 1:
+                    for(int x=0;x<j;x++)
+                         weight_A[x] = data_change[x];
+                    break;
+               case 2:
+                    for(int x=0;x<j;x++)
+                         weight_A[x] = data_change[x];
+                    break;
+               case 3:
+                    for(int x=0;x<j;x++)
+                         weight_A[x] = data_change[x];
+                    break;
+               case 4:
+                    for(int x=0;x<j;x++)
+                         weight_A[x] = data_change[x];
+                    break;
+               default:
+                    break;
+          }
      }
-     data_change[i] = weight[i + 1];
-   }
+     printf("DB 담기 시작\n");
+     char head[] = "INSERT INTO plate_weight VALUES( ";
+     sprintf(temp, "%s%s%s%s%s%s%s%s%s%s%s%s%s", head, id, head_tail, weight_A,head_tail, weight_B,head_tail, weight_C,head_tail, weight_D,head_tail, weight_E, endTail);
+     printf("asasas\n", temp);
+     //mysql_query(conn, temp);
+     printf("DB 담기 완료\n");
 
-   if (chk == 'A') {
-     char head[] = "INSERT INTO weight VALUES(";
-     sprintf(temp, "%s%s%s%s%s", head, id, head_tail, data_change, endTail);
+}
 
-   } else if (chk == 'B') {
-     char head2[] = "INSERT INTO weight VALUES(1, ";
-     sprintf(temp, "%s%s%s%s%s", head2, timenow, head_tail, data_change, endTail);
-   } else if (chk == 'C') {
-     char head3[] = "INSERT INTO weight VALUES(1, ";
-     sprintf(temp, "%s%s%s%s%s", head3, timenow, head_tail, data_change, endTail);
-   } else if (chk == 'D') {
-     char head3[] = "INSERT INTO weight VALUES(1, ";
-     sprintf(temp, "%s%s%s%s%s", head3, timenow, head_tail, data_change, endTail);
-   } else if (chk == 'E') {
-     char head3[] = "INSERT INTO weight VALUES(1, ";
-     sprintf(temp, "%s%s%s%s%s", head3, timenow, head_tail, data_change, endTail);
-   }
+char * timeToString(struct tm * t) {
+     static char s[20];
 
-   printf("%s", temp);
+     sprintf(s, "%04d%02d%02d%02d%02d%02d",
+          t -> tm_year + 1900, t -> tm_mon + 1, t -> tm_mday,
+          t -> tm_hour, t -> tm_min, t -> tm_sec
+     );
+     return s;
+}
 
-   mysql_query(conn, temp);
- }
-
- char * timeToString(struct tm * t) {
-   static char s[20];
-
-   sprintf(s, "%04d%02d%02d%02d%02d%02d",
-     t - > tm_year + 1900, t - > tm_mon + 1, t - > tm_mday,
-     t - > tm_hour, t - > tm_min, t - > tm_sec
-   );
-
-   return s;
- }
-
- #endif //#ifdef RaspberryPi
+#endif //#ifdef RaspberryPi
